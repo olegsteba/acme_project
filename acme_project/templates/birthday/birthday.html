@@ -3,26 +3,50 @@
 {% load django_bootstrap5 %}
 
 {% block content %}
-  <div class="card col-4">
-    <div class="card-header">
-      Калькулятор ожидания дня рождения
+  {% with data=form.instance %}
+    {% if 'edit/' in request.path %}
+      <h1>Редактировать запись {{ data.id }}</h1>
+    {% elif 'delete/' in request.path %}
+      <h1>Удалить запись {{ data.id }}</h1>
+    {% else %}
+      <h1>Создать запись</h1>
+    {% endif %}
+    <div class="card col-4">
+      <div class="card-header">
+        Калькулятор ожидания дня рождения
+      </div>
+      <div class="card-body">
+        <form
+          {% if 'edit/' in request.path %}
+          action="{% url 'birthday:edit' data.id %}"
+          {% elif 'delete/' in request.path %}
+            action="{% url 'birthday:delete' data.id %}"
+          {% else %}
+            action="{% url 'birthday:create' %}"
+          {% endif %}
+          method="post">
+          <!-- Защита CSRF -->
+          {% csrf_token %}
+          {% if 'delete/' in request.path %}
+            <p>{{ data_first_name }} {{ data.last_name }}</p>
+            <p>{{ data.birthday }}</p>
+          {% else %}
+            <!-- Выводим поля формы с помощью специального тега. -->
+            {% bootstrap_form form %}
+          {% endif %}
+          <!-- Добавляем кнопку отправки данных. -->
+          {% bootstrap_button button_type="submit" content="Отправить" %}
+        </form>
+      </div>
     </div>
-    <div class="card-body">
-      <form>
-        <!-- Выводим поля формы с помощью специального тега. -->
-        {% bootstrap_form form %}
-        <!-- Добавляем кнопку отправки данных. -->
-        {% bootstrap_button button_type="submit" content="Отправить" %}
-      </form>
-    </div>
-  </div>
-  {% with data=request.GET %}
+
     {% if form.is_valid %}
+      ID запись в БД: {{ data.id }}
       <h2>Привет, {{ data.first_name}} {{ data.last_name }}</h2>
       {% if birthday_countdown == 0 %}
         С днем рождения!
       {% else %}
-        Осталось дней до дня рождения {{ birthday_countdown }}
+        Осталось дней до дня рождения {{ birthday_countdown }}!
       {% endif %}
     {% endif %}
   {% endwith %}
