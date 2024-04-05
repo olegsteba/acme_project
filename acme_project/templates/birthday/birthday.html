@@ -24,7 +24,7 @@
           {% else %}
             action="{% url 'birthday:create' %}"
           {% endif %}
-          method="post">
+          method="post" enctype="multipart/form-data">
           <!-- Защита CSRF -->
           {% csrf_token %}
           {% if 'delete/' in request.path %}

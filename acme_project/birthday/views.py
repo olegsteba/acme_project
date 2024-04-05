@@ -1,5 +1,7 @@
 # birthday/views.py
 from django.shortcuts import get_object_or_404, redirect, render
+from django.core.paginator import Paginator
+
 
 from .forms import BirthdayForm
 from .models import Birthday
@@ -16,7 +18,11 @@ def birthday(request, pk=None):
 
     # Передаем в форму либо данные из запроса, либо None.
     # В случае редактирования прикрепляем объект модели.
-    form = BirthdayForm(request.POST or None, instance=instance)
+    form = BirthdayForm(
+        request.POST or None,
+        files=request.FILES or None,
+        instance=instance,
+    )
     # Создаём словарь контекста сразу после инициализации формы.
     context = {'form': form}
     # Если форма валидна...
@@ -33,8 +39,11 @@ def birthday(request, pk=None):
 
 
 def birthday_list(request):
-    birthdays = Birthday.objects.all()
-    context = {'birthdays': birthdays}
+    birthdays = Birthday.objects.order_by('id')
+    paginator = Paginator(birthdays, 2)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    context = {'page_obj': page_obj}
     return render(request, 'birthday/birthday_list.html', context=context)
 
 
