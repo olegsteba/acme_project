@@ -5,6 +5,7 @@ from django.views.generic import (
     CreateView, UpdateView, DeleteView
 )
 from django.urls import reverse_lazy
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
 from .forms import BirthdayForm
 from .models import Birthday
@@ -20,6 +21,13 @@ class BirthdayFormMixin:
     form_class = BirthdayForm
 
 
+class OnlyAuthorMixin(UserPassesTestMixin):
+
+    def test_func(self):
+        object = self.get_object()
+        return object.author == self.request.user
+
+
 class BirthdayDetailView(BirthdayMixin, DetailView):
 
     def get_context_data(self, **kwargs):
@@ -30,15 +38,18 @@ class BirthdayDetailView(BirthdayMixin, DetailView):
         return context
 
 
-class BirthdayCreateView(BirthdayMixin, BirthdayFormMixin, CreateView):
+class BirthdayCreateView(LoginRequiredMixin, BirthdayMixin, BirthdayFormMixin, CreateView):
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
+
+
+class BirthdayUpdateView(OnlyAuthorMixin, LoginRequiredMixin, BirthdayMixin, BirthdayFormMixin, UpdateView):
     pass
 
 
-class BirthdayUpdateView(BirthdayMixin, BirthdayFormMixin, UpdateView):
-    pass
-
-
-class BirthdayDeleteView(BirthdayMixin, DeleteView):
+class BirthdayDeleteView(OnlyAuthorMixin, LoginRequiredMixin, BirthdayMixin, DeleteView):
     success_url = reverse_lazy('birthday:list')
 
 
